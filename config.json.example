@@ -1,0 +1,27 @@
+{
+  "_comment": "这是配置文件示例，请复制为 config.json 并填入你的信息",
+  
+  "site": {
+    "domain": "your-wiki.fandom.com",
+    "_domain_comment": "你的 Fandom Wiki 域名，例如：karakai-jouzu-no-takagi-san.fandom.com",
+    
+    "path": "/zh/",
+    "_path_comment": "Wiki 路径，中文 Wiki 通常是 /zh/"
+  },
+  
+  "auth": {
+    "username": "YourBot@BotName",
+    "_username_comment": "机器人账号，格式：用户名@机器人名称",
+    
+    "password": "your_bot_password",
+    "_password_comment": "机器人密码（在 Special:BotPasswords 生成）"
+  },
+  
+  "conversion": {
+    "mode": "t2s",
+    "_mode_comment": "转换模式：t2s=繁体转简体，s2t=简体转繁体",
+    
+    "skip_fields": ["图片", "圖片"],
+    "_skip_fields_comment": "转换时跳过的字段名（不转换内容）"
+  }
+}

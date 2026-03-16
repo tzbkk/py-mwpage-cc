@@ -1,0 +1,3 @@
+mwclient
+opencc
+python-dotenv
