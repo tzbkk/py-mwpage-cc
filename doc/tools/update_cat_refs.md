@@ -7,7 +7,7 @@
 ## 用法
 
 ```bash
-python tools/update_cat_refs.py [category1] [category2] ...
+python src/update_cat_refs.py [category1] [category2] ...
 ```
 
 ### 参数
@@ -18,13 +18,13 @@ python tools/update_cat_refs.py [category1] [category2] ...
 
 ```bash
 # 更新默认分类
-python tools/update_cat_refs.py
+python src/update_cat_refs.py
 
 # 更新指定分类
-python tools/update_cat_refs.py "片頭曲" "片尾曲" "插曲"
+python src/update_cat_refs.py "片頭曲" "片尾曲" "插曲"
 
 # 更新其他分类
-python tools/update_cat_refs.py "角色" "地点"
+python src/update_cat_refs.py "角色" "地点"
 ```
 
 ## 工作流程

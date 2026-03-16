@@ -7,7 +7,7 @@
 ## 用法
 
 ```bash
-python tools/move_pages.py [page1] [page2] ...
+python src/move_pages.py [page1] [page2] ...
 ```
 
 ### 参数
@@ -18,13 +18,13 @@ python tools/move_pages.py [page1] [page2] ...
 
 ```bash
 # 使用默认页面列表
-python tools/move_pages.py
+python src/move_pages.py
 
 # 指定页面
-python tools/move_pages.py "雖然不會說出口。" "愛歌"
+python src/move_pages.py "雖然不會說出口。" "愛歌"
 
 # 批量处理
-python tools/move_pages.py "頁面1" "頁面2" "頁面3"
+python src/move_pages.py "頁面1" "頁面2" "頁面3"
 ```
 
 ## 默认页面列表

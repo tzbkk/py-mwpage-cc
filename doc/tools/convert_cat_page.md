@@ -7,7 +7,7 @@
 ## 用法
 
 ```bash
-python tools/convert_cat_page.py [page_name]
+python src/convert_cat_page.py [page_name]
 ```
 
 ### 参数
@@ -18,13 +18,13 @@ python tools/convert_cat_page.py [page_name]
 
 ```bash
 # 转换默认分类
-python tools/convert_cat_page.py
+python src/convert_cat_page.py
 
 # 转换指定分类
-python tools/convert_cat_page.py "Category:角色"
+python src/convert_cat_page.py "Category:角色"
 
 # 转换其他分类
-python tools/convert_cat_page.py "Category:音乐"
+python src/convert_cat_page.py "Category:音乐"
 ```
 
 ## 工作流程

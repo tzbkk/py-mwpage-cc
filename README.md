@@ -21,10 +21,10 @@ cp .env.example .env
 # 编辑 .env 填入你的 Wiki 信息
 
 # 3. 测试连接
-python tools/test_fandom.py
+python src/test_fandom.py
 
 # 4. 开始使用
-python tools/convert_template.py "Template:音樂信息"
+python src/convert_template.py "Template:音樂信息"
 ```
 
 ## 文档
@@ -43,7 +43,7 @@ python tools/convert_template.py "Template:音樂信息"
 ├── config.json.example  # JSON配置示例
 ├── requirements.txt     # Python依赖
 ├── fandom_bot.py        # 核心库
-├── tools/               # 工具脚本
+├── src/               # 工具脚本
 │   ├── batch_convert.py
 │   ├── convert_template.py
 │   ├── convert_category.py
@@ -51,7 +51,7 @@ python tools/convert_template.py "Template:音樂信息"
 └── doc/                 # 文档
     ├── README.md
     ├── QUICKSTART.md
-    └── tools/
+    └── src/
 ```
 
 ## 工具分类

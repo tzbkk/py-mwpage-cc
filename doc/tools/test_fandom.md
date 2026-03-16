@@ -7,7 +7,7 @@
 ## 用法
 
 ```bash
-python tools/test_fandom.py [page_name]
+python src/test_fandom.py [page_name]
 ```
 
 ### 参数
@@ -18,13 +18,13 @@ python tools/test_fandom.py [page_name]
 
 ```bash
 # 测试默认页面
-python tools/test_fandom.py
+python src/test_fandom.py
 
 # 测试指定页面
-python tools/test_fandom.py "首页"
+python src/test_fandom.py "首页"
 
 # 测试其他页面
-python tools/test_fandom.py "Template:音樂信息"
+python src/test_fandom.py "Template:音樂信息"
 ```
 
 ## 输出示例

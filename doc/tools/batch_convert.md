@@ -7,7 +7,7 @@
 ## 用法
 
 ```bash
-python tools/batch_convert.py <template_name>
+python src/batch_convert.py <template_name>
 ```
 
 ### 参数
@@ -18,10 +18,10 @@ python tools/batch_convert.py <template_name>
 
 ```bash
 # 转换所有使用 Template:音樂信息 的页面
-python tools/batch_convert.py "Template:音樂信息"
+python src/batch_convert.py "Template:音樂信息"
 
 # 转换其他模板
-python tools/batch_convert.py "Template:角色信息"
+python src/batch_convert.py "Template:角色信息"
 ```
 
 ## 工作流程

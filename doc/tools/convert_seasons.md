@@ -7,7 +7,7 @@
 ## 用法
 
 ```bash
-python tools/convert_seasons.py [page1] [page2] ...
+python src/convert_seasons.py [page1] [page2] ...
 ```
 
 ### 参数
@@ -18,13 +18,13 @@ python tools/convert_seasons.py [page1] [page2] ...
 
 ```bash
 # 转换默认的三个季度页面
-python tools/convert_seasons.py
+python src/convert_seasons.py
 
 # 转换指定页面
-python tools/convert_seasons.py "动画第一季" "动画第二季"
+python src/convert_seasons.py "动画第一季" "动画第二季"
 
 # 转换其他系列
-python tools/convert_seasons.py "漫画第一卷" "漫画第二卷"
+python src/convert_seasons.py "漫画第一卷" "漫画第二卷"
 ```
 
 ## 工作流程

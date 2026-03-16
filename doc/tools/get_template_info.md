@@ -7,7 +7,7 @@
 ## 用法
 
 ```bash
-python tools/get_template_info.py [template_name]
+python src/get_template_info.py [template_name]
 ```
 
 ### 参数
@@ -18,13 +18,13 @@ python tools/get_template_info.py [template_name]
 
 ```bash
 # 查询默认模板
-python tools/get_template_info.py
+python src/get_template_info.py
 
 # 查询指定模板
-python tools/get_template_info.py "Template:角色信息"
+python src/get_template_info.py "Template:角色信息"
 
 # 查询其他模板
-python tools/get_template_info.py "Template:音乐信息"
+python src/get_template_info.py "Template:音乐信息"
 ```
 
 ## 输出示例

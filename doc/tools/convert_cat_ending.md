@@ -7,7 +7,7 @@
 ## 用法
 
 ```bash
-python tools/convert_cat_ending.py [category1] [category2] ...
+python src/convert_cat_ending.py [category1] [category2] ...
 ```
 
 ### 参数
@@ -18,13 +18,13 @@ python tools/convert_cat_ending.py [category1] [category2] ...
 
 ```bash
 # 转换默认分类
-python tools/convert_cat_ending.py
+python src/convert_cat_ending.py
 
 # 转换指定分类
-python tools/convert_cat_ending.py "片頭曲" "片尾曲" "插曲"
+python src/convert_cat_ending.py "片頭曲" "片尾曲" "插曲"
 
 # 转换其他分类
-python tools/convert_cat_ending.py "角色" "地点" "物品"
+python src/convert_cat_ending.py "角色" "地点" "物品"
 ```
 
 ## 工作流程

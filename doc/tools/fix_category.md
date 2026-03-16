@@ -7,7 +7,7 @@
 ## 用法
 
 ```bash
-python tools/fix_category.py [old_category] [new_category]
+python src/fix_category.py [old_category] [new_category]
 ```
 
 ### 参数
@@ -19,13 +19,13 @@ python tools/fix_category.py [old_category] [new_category]
 
 ```bash
 # 默认替换
-python tools/fix_category.py
+python src/fix_category.py
 
 # 指定替换
-python tools/fix_category.py "音樂" "音乐"
+python src/fix_category.py "音樂" "音乐"
 
 # 其他替换
-python tools/fix_category.py "舊分類" "新分类"
+python src/fix_category.py "舊分類" "新分类"
 ```
 
 ## 工作流程

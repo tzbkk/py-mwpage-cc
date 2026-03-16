@@ -63,41 +63,41 @@ cp config.json.example config.json
 ## 工具列表
 
 ### 核心库
-- [fandom_bot.py](./tools/FandomBot.md) - 基础机器人类库
+- [fandom_bot.py](./src/FandomBot.md) - 基础机器人类库
 
 ### 转换工具
-- [batch_convert.py](./tools/batch_convert.md) - 批量转换使用模板的页面
-- [convert_template.py](./tools/convert_template.md) - 转换模板及其引用页面
-- [convert_category.py](./tools/convert_category.md) - 转换分类下的所有页面
-- [convert_seasons.py](./tools/convert_seasons.md) - 转换季度页面及其子页面
-- [convert_stars.py](./tools/convert_stars.md) - 转换单个页面（保留图片）
+- [batch_convert.py](./src/batch_convert.md) - 批量转换使用模板的页面
+- [convert_template.py](./src/convert_template.md) - 转换模板及其引用页面
+- [convert_category.py](./src/convert_category.md) - 转换分类下的所有页面
+- [convert_seasons.py](./src/convert_seasons.md) - 转换季度页面及其子页面
+- [convert_stars.py](./src/convert_stars.md) - 转换单个页面（保留图片）
 
 ### 分类工具
-- [convert_cat_ending.py](./tools/convert_cat_ending.md) - 转换分类页面
-- [convert_cat_page.py](./tools/convert_cat_page.md) - 转换单个分类页面
-- [fix_category.py](./tools/fix_category.md) - 批量替换分类标签
-- [update_cat_refs.py](./tools/update_cat_refs.md) - 更新分类引用
+- [convert_cat_ending.py](./src/convert_cat_ending.md) - 转换分类页面
+- [convert_cat_page.py](./src/convert_cat_page.md) - 转换单个分类页面
+- [fix_category.py](./src/fix_category.md) - 批量替换分类标签
+- [update_cat_refs.py](./src/update_cat_refs.md) - 更新分类引用
 
 ### 辅助工具
-- [move_pages.py](./tools/move_pages.md) - 批量移动/重命名页面
-- [get_template_info.py](./tools/get_template_info.md) - 获取模板信息
-- [test_fandom.py](./tools/test_fandom.md) - 测试连接和登录
+- [move_pages.py](./src/move_pages.md) - 批量移动/重命名页面
+- [get_template_info.py](./src/get_template_info.md) - 获取模板信息
+- [test_fandom.py](./src/test_fandom.md) - 测试连接和登录
 
 ## 快速开始
 
 1. 测试连接：
 ```bash
-python tools/test_fandom.py
+python src/test_fandom.py
 ```
 
 2. 转换模板及其引用的页面：
 ```bash
-python tools/convert_template.py "Template:音樂信息"
+python src/convert_template.py "Template:音樂信息"
 ```
 
 3. 转换分类下的所有页面：
 ```bash
-python tools/convert_category.py "音樂"
+python src/convert_category.py "音樂"
 ```
 
 ## 注意事项
@@ -115,12 +115,12 @@ famdom-editor/
 ├── config.json.example  # JSON配置示例
 ├── requirements.txt     # Python依赖
 ├── fandom_bot.py        # 核心库
-├── tools/               # 工具脚本
+├── src/               # 工具脚本
 │   ├── batch_convert.py
 │   ├── convert_template.py
 │   └── ...
 └── doc/                 # 文档目录
     ├── README.md
     ├── QUICKSTART.md
-    └── tools/
+    └── src/
 ```

@@ -10,7 +10,7 @@
 ## 用法
 
 ```bash
-python tools/convert_template.py [template_name]
+python src/convert_template.py [template_name]
 ```
 
 ### 参数
@@ -21,10 +21,10 @@ python tools/convert_template.py [template_name]
 
 ```bash
 # 转换默认模板
-python tools/convert_template.py
+python src/convert_template.py
 
 # 转换指定模板
-python tools/convert_template.py "Template:角色信息"
+python src/convert_template.py "Template:角色信息"
 ```
 
 ## 工作流程

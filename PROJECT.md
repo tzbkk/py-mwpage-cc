@@ -7,7 +7,7 @@ Fandom Wiki/MediaWiki 页面简繁转换自动化工具
 ```
 py-mwpage-cc/
 ├── fandom_bot.py        # 核心库
-├── tools/               # 12个通用工具
+├── src/               # 12个通用工具
 ├── doc/                 # 完整文档
 ├── .env.example         # 配置示例
 └── requirements.txt     # 依赖列表
@@ -43,7 +43,7 @@ cp .env.example .env
 # 编辑 .env 填入配置
 
 # 测试
-python tools/test_fandom.py
+python src/test_fandom.py
 ```
 
 ## 许可证

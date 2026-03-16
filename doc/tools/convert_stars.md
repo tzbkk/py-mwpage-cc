@@ -7,7 +7,7 @@
 ## 用法
 
 ```bash
-python tools/convert_stars.py [page_name]
+python src/convert_stars.py [page_name]
 ```
 
 ### 参数
@@ -18,13 +18,13 @@ python tools/convert_stars.py [page_name]
 
 ```bash
 # 转换默认页面
-python tools/convert_stars.py
+python src/convert_stars.py
 
 # 转换指定页面
-python tools/convert_stars.py "角色信息"
+python src/convert_stars.py "角色信息"
 
 # 转换其他页面
-python tools/convert_stars.py "主要角色"
+python src/convert_stars.py "主要角色"
 ```
 
 ## 工作流程

@@ -32,7 +32,7 @@ cp config.json.example config.json
 
 ### 1.3 测试连接
 ```bash
-python tools/test_fandom.py
+python src/test_fandom.py
 ```
 
 ## 2. 常用场景
@@ -40,49 +40,49 @@ python tools/test_fandom.py
 ### 场景1: 转换模板及其引用的页面
 ```bash
 # 完整转换（模板+引用+移动）
-python tools/convert_template.py "Template:音樂信息"
+python src/convert_template.py "Template:音樂信息"
 
 # 仅转换引用页面
-python tools/batch_convert.py "Template:音樂信息"
+python src/batch_convert.py "Template:音樂信息"
 ```
 
 ### 场景2: 转换分类
 ```bash
 # 转换分类下的所有页面（内容+名称）
-python tools/convert_category.py "音樂"
+python src/convert_category.py "音樂"
 
 # 仅转换分类页面本身
-python tools/convert_cat_page.py "Category:音乐"
+python src/convert_cat_page.py "Category:音乐"
 
 # 批量转换多个分类
-python tools/convert_cat_ending.py "片頭曲" "片尾曲"
+python src/convert_cat_ending.py "片頭曲" "片尾曲"
 ```
 
 ### 场景3: 批量移动页面
 ```bash
 # 移动指定页面
-python tools/move_pages.py "頁面1" "頁面2" "頁面3"
+python src/move_pages.py "頁面1" "頁面2" "頁面3"
 ```
 
 ### 场景4: 修复分类引用
 ```bash
 # 替换单个分类标签
-python tools/fix_category.py "音樂" "音乐"
+python src/fix_category.py "音樂" "音乐"
 
 # 批量替换多个分类标签
-python tools/update_cat_refs.py "片頭曲" "片尾曲"
+python src/update_cat_refs.py "片頭曲" "片尾曲"
 ```
 
 ### 场景5: 转换系列页面
 ```bash
 # 转换季度页面及其子页面
-python tools/convert_seasons.py "动画第一季" "动画第二季"
+python src/convert_seasons.py "动画第一季" "动画第二季"
 ```
 
 ### 场景6: 转换单个页面
 ```bash
 # 转换单个页面
-python tools/convert_stars.py "STARS"
+python src/convert_stars.py "STARS"
 ```
 
 ## 3. 工作流程建议

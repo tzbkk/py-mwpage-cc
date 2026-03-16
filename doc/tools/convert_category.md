@@ -7,7 +7,7 @@
 ## 用法
 
 ```bash
-python tools/convert_category.py [category_name]
+python src/convert_category.py [category_name]
 ```
 
 ### 参数
@@ -18,10 +18,10 @@ python tools/convert_category.py [category_name]
 
 ```bash
 # 转换音乐分类
-python tools/convert_category.py "音樂"
+python src/convert_category.py "音樂"
 
 # 转换其他分类
-python tools/convert_category.py "角色"
+python src/convert_category.py "角色"
 ```
 
 ## 工作流程
