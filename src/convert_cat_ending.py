@@ -3,7 +3,7 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from fandom_bot import FandomBot
+from fandom_bot import FandomBot, verify_filenames_preserved
 
 
 def main():
@@ -19,10 +19,19 @@ def main():
         cat = bot.get_page(f"Category:{cat_name}")
         if cat.exists:
             content = cat.text()
-            new_content = bot.cc.convert(content)
+            new_content = bot.convert_text(content)
             
-            bot.edit_page(cat, new_content, summary="转换为简体中文")
-            print(f"  内容已转换")
+            if content != new_content:
+                valid, errors = verify_filenames_preserved(content, new_content)
+                if not valid:
+                    print(f"  文件名验证失败:")
+                    for err in errors:
+                        print(f"    {err}")
+                    continue
+                bot.edit_page(cat, new_content, summary="转换为简体中文")
+                print(f"  内容已转换")
+            else:
+                print(f"  内容无需转换")
             
             if cat_name != new_name:
                 bot.move_page(cat, f"Category:{new_name}", reason="改名为简体中文")

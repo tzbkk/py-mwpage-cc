@@ -3,13 +3,110 @@ from opencc import OpenCC
 import json
 import re
 import os
-from typing import List, Optional, Callable
+from typing import List, Optional, Callable, Tuple, Dict
 
 try:
     from dotenv import load_dotenv
     HAS_DOTENV = True
 except ImportError:
     HAS_DOTENV = False
+
+
+FILE_EXTENSIONS = r'(?:jpg|jpeg|png|gif|svg|webp|bmp|ico|tiff?|pdf|ogg|mp3|mp4|webm|ogv)'
+
+
+def protect_filenames(text: str) -> Tuple[str, Dict[str, str]]:
+    """保护所有文件名不被转换，支持带空格的文件名"""
+    protected = {}
+    counter = [0]
+    
+    def get_placeholder():
+        placeholder = f'__PROTECTED_FILE_{counter[0]}__'
+        counter[0] += 1
+        return placeholder
+    
+    # [[File:xxx.jpg|...]] 或 [[Image:xxx.jpg|...]] - 只保护文件名部分
+    def replace_wiki_file_link(match):
+        placeholder = get_placeholder()
+        prefix = match.group(1)
+        filename = match.group(2)
+        params = match.group(3) if match.lastindex >= 3 else ''
+        protected[placeholder] = f'{prefix}:{filename}'
+        return f'[[{placeholder}{params}]]'
+    
+    text = re.sub(
+        rf'\[\[(File|Image|文件|檔案):([^\|\]]+?\.{FILE_EXTENSIONS})([^\]]*?)\]\]',
+        replace_wiki_file_link,
+        text,
+        flags=re.IGNORECASE
+    )
+    
+    # File:xxx.jpg 或 Image:xxx.jpg（不含方括号，支持带空格）
+    def replace_file_prefix(match):
+        placeholder = get_placeholder()
+        protected[placeholder] = match.group(0)
+        return placeholder
+    
+    text = re.sub(
+        rf'(File|Image|文件|檔案):[^\|\]\[\n]+?\.{FILE_EXTENSIONS}',
+        replace_file_prefix,
+        text,
+        flags=re.IGNORECASE
+    )
+    
+    # gallery 标签中的纯文件名（行首开始，支持带空格）
+    def replace_gallery_file(match):
+        placeholder = get_placeholder()
+        protected[placeholder] = match.group(1)
+        return placeholder
+    
+    text = re.sub(
+        rf'^([^\|\]\[=\n]+?\.{FILE_EXTENSIONS})(?=\s*$|\s*\|)',
+        replace_gallery_file,
+        text,
+        flags=re.MULTILINE | re.IGNORECASE
+    )
+    
+    # =xxx.jpg 形式的文件名值（= 后面直接是文件名，支持带空格）
+    def replace_value_file(match):
+        placeholder = get_placeholder()
+        protected[placeholder] = match.group(1)
+        return '=' + placeholder
+    
+    text = re.sub(
+        rf'=([^\|\]\[\n=]+?\.{FILE_EXTENSIONS})(?=\s*$|\s*[\|\]])',
+        replace_value_file,
+        text,
+        flags=re.IGNORECASE
+    )
+    
+    return text, protected
+
+
+def restore_filenames(text: str, protected: Dict[str, str]) -> str:
+    """恢复保护的文件名"""
+    for placeholder, original in sorted(protected.items(), key=lambda x: len(x[0]), reverse=True):
+        text = text.replace(placeholder, original)
+    return text
+
+
+def verify_filenames_preserved(original: str, converted: str) -> Tuple[bool, List[str]]:
+    """验证文件名是否被正确保护"""
+    pattern = rf'[^\s\[\]|=]*?\.{FILE_EXTENSIONS}'
+    
+    files_orig = set(re.findall(pattern, original, re.IGNORECASE))
+    files_new = set(re.findall(pattern, converted, re.IGNORECASE))
+    
+    if files_orig == files_new:
+        return True, []
+    
+    errors = []
+    if files_orig - files_new:
+        errors.append(f"丢失: {files_orig - files_new}")
+    if files_new - files_orig:
+        errors.append(f"新增: {files_new - files_orig}")
+    
+    return False, errors
 
 
 class FandomBot:
@@ -69,25 +166,10 @@ class FandomBot:
         return config
     
     def convert_text(self, text: str, skip_images: bool = True) -> str:
-        lines = text.split('\n')
-        result = []
-        
-        for line in lines:
-            if line.startswith('|') and '=' in line:
-                parts = line.split('=', 1)
-                var_name = parts[0]
-                value = parts[1] if len(parts) > 1 else ''
-                
-                if skip_images and any(field in var_name for field in self.skip_fields):
-                    result.append(var_name + '=' + value)
-                else:
-                    result.append(self.cc.convert(var_name) + '=' + self.cc.convert(value))
-            elif line.startswith('{{'):
-                result.append(self.cc.convert(line))
-            else:
-                result.append(self.cc.convert(line))
-        
-        return '\n'.join(result)
+        text, protected = protect_filenames(text)
+        text = self.cc.convert(text)
+        text = restore_filenames(text, protected)
+        return text
     
     def get_page(self, page_name: str):
         return self.site.pages[page_name]

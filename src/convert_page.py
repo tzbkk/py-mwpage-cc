@@ -14,49 +14,7 @@ import argparse
 import time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from fandom_bot import FandomBot
-
-def protect_filenames(text):
-    """保护文件名不被转换"""
-    protected = {}
-    counter = [0]
-    
-    def get_placeholder():
-        placeholder = f'__FILE_{counter[0]}__'
-        counter[0] += 1
-        return placeholder
-    
-    # 保护 File:xxx.jpg 格式
-    file_pattern1 = r'(File:[^\|\]\[\n]+?\.(?:jpg|jpeg|png|gif|svg|webp|bmp))'
-    def replace_file1(match):
-        placeholder = get_placeholder()
-        protected[placeholder] = match.group(1)
-        return placeholder
-    text = re.sub(file_pattern1, replace_file1, text, flags=re.IGNORECASE)
-    
-    # 保护独立的文件名（在 gallery 标签中或其他地方）
-    file_pattern2 = r'([^\|\[\]\n]+\.(?:jpg|jpeg|png|gif|svg|webp|bmp)(?=\|))'
-    def replace_file2(match):
-        placeholder = get_placeholder()
-        protected[placeholder] = match.group(1)
-        return placeholder
-    text = re.sub(file_pattern2, replace_file2, text, flags=re.IGNORECASE)
-    
-    # 保护 [[File:xxx.jpg]] 格式
-    file_pattern3 = r'(\[\[File:[^\]]+?\.(?:jpg|jpeg|png|gif|svg|webp|bmp)[^\]]*?\]\])'
-    def replace_file3(match):
-        placeholder = get_placeholder()
-        protected[placeholder] = match.group(1)
-        return placeholder
-    text = re.sub(file_pattern3, replace_file3, text, flags=re.IGNORECASE)
-    
-    return text, protected
-
-def restore_filenames(text, protected):
-    """恢复保护的文件名"""
-    for placeholder, original in sorted(protected.items(), key=lambda x: len(x[0]), reverse=True):
-        text = text.replace(placeholder, original)
-    return text
+from fandom_bot import FandomBot, protect_filenames, restore_filenames, verify_filenames_preserved
 
 def convert_page(text, bot):
     """转换单个页面的文本"""
@@ -67,30 +25,24 @@ def convert_page(text, bot):
 
 def verify_conversion(original, new_content, page_name):
     """验证转换结果"""
-    import re
     
     print(f"\n📊 转换统计 - {page_name}")
     
-    # 行数统计
     lines_orig = original.split('\n')
     lines_new = new_content.split('\n')
     changed_lines = sum(1 for o, n in zip(lines_orig, lines_new) if o != n)
     print(f"  - 总行数: {len(lines_orig)}")
     print(f"  - 修改行数: {changed_lines}")
     
-    # 文件名检查
-    files_orig = set(re.findall(r'[^\s\[\]|=]+\.(?:jpg|jpeg|png|gif)', original, re.IGNORECASE))
-    files_new = set(re.findall(r'[^\s\[\]|=]+\.(?:jpg|jpeg|png|gif)', new_content, re.IGNORECASE))
+    valid, errors = verify_filenames_preserved(original, new_content)
     
-    if files_orig == files_new:
-        print(f"  ✓ 文件名保护正常 ({len(files_orig)} 个文件)")
+    if valid:
+        print(f"  ✓ 文件名保护正常")
         return True
     else:
         print(f"  ⚠️  文件名可能有问题:")
-        if files_orig - files_new:
-            print(f"    丢失: {files_orig - files_new}")
-        if files_new - files_orig:
-            print(f"    新增: {files_new - files_orig}")
+        for err in errors:
+            print(f"    {err}")
         return False
 
 def convert_single_page(page_name, bot, dry_run=False, show_diff=False):

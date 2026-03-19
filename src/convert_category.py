@@ -14,46 +14,7 @@ import argparse
 import time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from fandom_bot import FandomBot
-
-def protect_filenames(text):
-    """保护文件名不被转换"""
-    protected = {}
-    counter = [0]
-    
-    def get_placeholder():
-        placeholder = f'__FILE_{counter[0]}__'
-        counter[0] += 1
-        return placeholder
-    
-    file_pattern1 = r'(File:[^\|\]\[\n]+?\.(?:jpg|jpeg|png|gif|svg|webp|bmp))'
-    def replace_file1(match):
-        placeholder = get_placeholder()
-        protected[placeholder] = match.group(1)
-        return placeholder
-    text = re.sub(file_pattern1, replace_file1, text, flags=re.IGNORECASE)
-    
-    file_pattern2 = r'([^\|\[\]\n]+\.(?:jpg|jpeg|png|gif|svg|webp|bmp)(?=\|))'
-    def replace_file2(match):
-        placeholder = get_placeholder()
-        protected[placeholder] = match.group(1)
-        return placeholder
-    text = re.sub(file_pattern2, replace_file2, text, flags=re.IGNORECASE)
-    
-    file_pattern3 = r'(\[\[File:[^\]]+?\.(?:jpg|jpeg|png|gif|svg|webp|bmp)[^\]]*?\]\])'
-    def replace_file3(match):
-        placeholder = get_placeholder()
-        protected[placeholder] = match.group(1)
-        return placeholder
-    text = re.sub(file_pattern3, replace_file3, text, flags=re.IGNORECASE)
-    
-    return text, protected
-
-def restore_filenames(text, protected):
-    """恢复保护的文件名"""
-    for placeholder, original in sorted(protected.items(), key=lambda x: len(x[0]), reverse=True):
-        text = text.replace(placeholder, original)
-    return text
+from fandom_bot import FandomBot, protect_filenames, restore_filenames, verify_filenames_preserved
 
 def convert_page(text, bot):
     """转换单个页面的文本"""
@@ -64,9 +25,8 @@ def convert_page(text, bot):
 
 def verify_conversion(original, new_content):
     """验证转换结果"""
-    files_orig = set(re.findall(r'[^\s\[\]|=]+\.(?:jpg|jpeg|png|gif)', original, re.IGNORECASE))
-    files_new = set(re.findall(r'[^\s\[\]|=]+\.(?:jpg|jpeg|png|gif)', new_content, re.IGNORECASE))
-    return files_orig == files_new
+    valid, _ = verify_filenames_preserved(original, new_content)
+    return valid
 
 def list_category_pages(category_name, bot, limit=None):
     """列出分类下的所有页面"""
