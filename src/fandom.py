@@ -42,6 +42,7 @@ def main():
   restore   从历史版本恢复页面
   scan      扫描所有 main 命名空间页面并交互式转换
   scan-category  扫描所有 category 命名空间页面并交互式转换
+  move-category  移动 category 页面（先更新链接，再移动页面）
   test      测试连接
   info      获取模板/页面信息
   
@@ -136,6 +137,13 @@ def main():
     update_parser.add_argument('categories', nargs='*', help='要更新的分类名称（不含 Category: 前缀）')
     update_parser.add_argument('--from-file', metavar='FILE', help='从文件读取分类列表')
     update_parser.add_argument('--dry-run', action='store_true', help='预览模式')
+    
+    # move-category 子命令
+    move_cat_parser = subparsers.add_parser('move-category', help='移动 category 页面（先更新链接，再移动页面）')
+    move_cat_parser.add_argument('old_name', nargs='?', help='旧分类名称（不含 Category: 前缀）')
+    move_cat_parser.add_argument('new_name', nargs='?', help='新分类名称（不含 Category: 前缀）')
+    move_cat_parser.add_argument('--from-file', metavar='FILE', help='从文件读取分类列表')
+    move_cat_parser.add_argument('--dry-run', action='store_true', help='预览模式')
     
     args = parser.parse_args()
     
@@ -245,6 +253,19 @@ def main():
         if args.approve_all:
             sys.argv.append('--approve-all')
         scan_category.main()
+    
+    elif args.command == 'move-category':
+        import move_category
+        sys.argv = ['move_category.py']
+        if args.old_name:
+            sys.argv.append(args.old_name)
+            if args.new_name:
+                sys.argv.append(args.new_name)
+        if args.from_file:
+            sys.argv.extend(['--from-file', args.from_file])
+        if args.dry_run:
+            sys.argv.append('--dry-run')
+        move_category.main()
     
     elif args.command == 'fix-links':
         import fix_links
