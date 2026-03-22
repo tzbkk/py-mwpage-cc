@@ -41,9 +41,10 @@ def main():
   template  转换使用模板的所有页面
   restore   从历史版本恢复页面
   scan      扫描所有 main 命名空间页面并交互式转换
+  scan-category  扫描所有 category 命名空间页面并交互式转换
   test      测试连接
   info      获取模板/页面信息
-
+  
 快速开始:
   # 1. 测试连接
   %(prog)s test
@@ -108,6 +109,12 @@ def main():
     scan_parser.add_argument('--limit', type=int, metavar='N', help='限制处理的页面数量')
     scan_parser.add_argument('--scan-only', action='store_true', help='仅扫描，不进行转换')
     scan_parser.add_argument('--approve-all', action='store_true', help='自动批准所有修改（非交互式）')
+    
+    # scan-category 子命令
+    scan_cat_parser = subparsers.add_parser('scan-category', help='扫描所有 category 命名空间页面并交互式转换')
+    scan_cat_parser.add_argument('--limit', type=int, metavar='N', help='限制处理的页面数量')
+    scan_cat_parser.add_argument('--scan-only', action='store_true', help='仅扫描，不进行转换')
+    scan_cat_parser.add_argument('--approve-all', action='store_true', help='自动批准所有修改（非交互式）')
     
     # test 子命令
     test_parser = subparsers.add_parser('test', help='测试连接')
@@ -227,6 +234,17 @@ def main():
         if args.approve_all:
             sys.argv.append('--approve-all')
         scan_and_convert.main()
+    
+    elif args.command == 'scan-category':
+        import scan_category
+        sys.argv = ['scan_category.py']
+        if args.limit:
+            sys.argv.extend(['--limit', str(args.limit)])
+        if args.scan_only:
+            sys.argv.append('--scan-only')
+        if args.approve_all:
+            sys.argv.append('--approve-all')
+        scan_category.main()
     
     elif args.command == 'fix-links':
         import fix_links
