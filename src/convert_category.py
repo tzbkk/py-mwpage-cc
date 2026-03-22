@@ -127,6 +127,49 @@ def convert_category(category_name, bot, dry_run=False, limit=None, test_first=T
     
     return failed == 0
 
+def convert_category_page(category_name, bot, dry_run=False):
+    """转换单个分类页面"""
+    new_name = bot.cc.convert(category_name)
+    
+    cat = bot.get_page(f"Category:{category_name}")
+    if not cat.exists:
+        print(f"❌ 页面不存在: Category:{category_name}")
+        return False
+    
+    content = cat.text()
+    new_content = bot.convert_text(content)
+    
+    # 转换内容
+    if content != new_content:
+        valid, errors = verify_filenames_preserved(content, new_content)
+        if not valid:
+            print("⚠️  文件名验证失败:")
+            for err in errors:
+                print(f"    {err}")
+            return False
+        
+        if dry_run:
+            print("  📝 内容将会修改（预览模式）")
+        else:
+            bot.edit_page(cat, new_content, summary="转换为简体中文")
+            print("  ✓ 内容已转换")
+    else:
+        print("  ℹ️  内容无需转换")
+    
+    # 移动页面（如果名称不同）
+    if category_name != new_name:
+        if dry_run:
+            print(f"  📝 将会移动到 Category:{new_name}（预览模式）")
+        else:
+            try:
+                bot.move_page(cat, f"Category:{new_name}", reason="改名为简体中文")
+                print(f"  ✓ 已移动到 Category:{new_name}")
+            except Exception as e:
+                print(f"  ⚠️  移动失败: {e}")
+                return False
+    
+    return True
+
 def main():
     parser = argparse.ArgumentParser(
         description='Fandom Wiki 分类转换工具',
@@ -147,10 +190,15 @@ def main():
   
   # 跳过第一个页面测试
   %(prog)s "音乐" --no-test-first
+  
+  # 转换分类页面本身（含移动）
+  %(prog)s --page "片頭曲"
+  %(prog)s --page "片頭曲" --dry-run
         """
     )
     
-    parser.add_argument('category', help='分类名称（不需要包含 Category: 前缀）')
+    parser.add_argument('category', nargs='?', help='分类名称（不需要包含 Category: 前缀）')
+    parser.add_argument('--page', metavar='NAME', help='转换单个分类页面本身（含移动）')
     parser.add_argument('--list', action='store_true', help='只列出页面，不转换')
     parser.add_argument('--dry-run', action='store_true', help='预览模式：显示将要修改但不保存')
     parser.add_argument('--limit', type=int, metavar='N', help='限制转换的页面数量')
@@ -158,12 +206,20 @@ def main():
     
     args = parser.parse_args()
     
+    if not args.category and not args.page:
+        parser.print_help()
+        sys.exit(1)
+    
     try:
         bot = FandomBot()
         print(f"✓ 已登录: {bot.site.username}\n")
     except Exception as e:
         print(f"❌ 登录失败: {e}")
         sys.exit(1)
+    
+    if args.page:
+        success = convert_category_page(args.page, bot, args.dry_run)
+        sys.exit(0 if success else 1)
     
     if args.list:
         pages = list_category_pages(args.category, bot, args.limit)

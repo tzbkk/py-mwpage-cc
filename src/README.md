@@ -4,7 +4,7 @@
 
 ## 主要工具
 
-### 统一入口（推荐）
+### 统一入口（推荐）⭐
 
 **fandom.py** - 统一的命令行工具，提供所有转换功能
 
@@ -17,6 +17,11 @@ python src/fandom.py <command> [options]
 - `category` - 转换分类下的所有页面
 - `template` - 转换使用模板的所有页面
 - `restore` - 从历史版本恢复页面
+- `scan` - 扫描所有 main 命名空间页面并交互式转换
+- `test` - 测试连接
+- `info` - 获取模板/页面信息
+- `fix-links` - 批量修复链接为简体版本
+- `update-cat-refs` - 批量更新分类引用为简体中文
 
 ### 页面转换
 
@@ -30,6 +35,10 @@ python src/convert_page.py "页面名" [选项]
 - `--dry-run` - 预览模式
 - `--show-diff` - 显示修改详情
 - `--from-file FILE` - 从文件读取页面列表
+- `--search KEYWORD` - 搜索包含关键词的页面
+- `--filter PATTERN` - 额外过滤模式
+- `--list` - 只列出页面（搜索模式）
+- `--with-subpages` - 同时转换子页面
 
 ### 分类转换
 
@@ -44,6 +53,7 @@ python src/convert_category.py "分类名" [选项]
 - `--dry-run` - 预览模式
 - `--limit N` - 限制转换数量
 - `--no-test-first` - 跳过测试
+- `--page NAME` - 转换单个分类页面本身（含移动）
 
 ### 模板转换
 
@@ -71,48 +81,84 @@ python src/restore_from_history.py "页面名" [选项]
 **选项：**
 - `--show-versions` - 显示历史版本
 
-## 辅助工具
+### 扫描转换
 
-### test_fandom.py
-测试 Wiki 连接和登录。
-
-```bash
-python src/test_fandom.py [页面名]
-```
-
-### get_template_info.py
-获取模板信息。
+**scan_and_convert.py** - 扫描所有 main 命名空间页面并交互式转换
 
 ```bash
-python src/get_template_info.py "Template:模板名"
+python src/scan_and_convert.py [选项]
 ```
 
-### move_pages.py
-批量移动/重命名页面。
+**选项：**
+- `--limit N` - 限制处理的页面数量
+- `--scan-only` - 仅扫描，不进行转换
+- `--approve-all` - 自动批准所有修改（非交互式）
+
+### 页面移动
+
+**move_pages.py** - 批量移动/重命名页面
 
 ```bash
 python src/move_pages.py "页面1" "页面2" ...
 ```
 
-## 特定用途工具
+**选项：**
+- `--from-file FILE` - 从文件读取页面列表
+- `--dry-run` - 预览模式
 
-这些工具用于特定场景：
+### 链接修复
 
-- `convert_cat_ending.py` - 转换分类页面后缀
-- `convert_cat_page.py` - 转换单个分类页面
-- `convert_seasons.py` - 转换季度页面
-- `update_cat_refs.py` - 更新分类引用
+**fix_links.py** - 批量修复链接为简体版本
+
+```bash
+python src/fix_links.py "舊文本" "新文本" [选项]
+```
+
+**选项：**
+- `--limit N` - 限制处理的页面数量
+- `--dry-run` - 预览模式
+
+### 分类引用更新
+
+**update_cat_refs.py** - 批量更新分类引用为简体中文
+
+```bash
+python src/update_cat_refs.py "分类名" [选项]
+```
+
+**选项：**
+- `--from-file FILE` - 从文件读取分类列表
+- `--dry-run` - 预览模式
+
+## 辅助模块
+
+### batch_processor.py
+
+批处理工具模块，提供通用的批量处理功能。
+
+主要功能：
+- `BatchProcessor` 类 - 批量处理页面
+- `read_page_list()` - 从文件读取页面列表
+- `create_batch_parser()` - 创建标准的批处理命令行解析器
+- `parse_page_args()` - 解析页面参数
 
 ## 使用建议
 
 ### 日常使用
 
-对于日常的繁简转换任务，推荐使用：
+对于日常的繁简转换任务，推荐使用统一入口：
 
 ```bash
-# 使用统一入口
+# 测试连接
+python src/fandom.py test
+
+# 转换页面
 python src/fandom.py page "页面名"
+
+# 转换分类
 python src/fandom.py category "分类名"
+
+# 转换模板
 python src/fandom.py template "Template:模板名" --batch
 ```
 
@@ -120,20 +166,32 @@ python src/fandom.py template "Template:模板名" --batch
 
 ```bash
 # 测试连接
-python src/test_fandom.py
+python src/fandom.py test
 
 # 预览转换
 python src/fandom.py page "页面名" --dry-run
+
+# 获取模板信息
+python src/fandom.py info "Template:模板名"
 ```
 
 ### 批量操作
 
 ```bash
 # 从文件批量转换
-python src/convert_page.py --from-file pages.txt
+python src/fandom.py page --from-file pages.txt
 
 # 转换分类（限制数量）
-python src/convert_category.py "分类名" --limit 10
+python src/fandom.py category "分类名" --limit 10
+
+# 扫描并转换
+python src/fandom.py scan --limit 5 --approve-all
+
+# 修复链接
+python src/fandom.py fix-links "舊文本" "新文本"
+
+# 更新分类引用
+python src/fandom.py update-cat-refs --from-file categories.txt
 ```
 
 ## 核心特性
@@ -160,18 +218,16 @@ python src/convert_category.py "分类名" --limit 10
 
 ```
 src/
-├── fandom.py                      # 统一入口
+├── fandom.py                      # 统一入口 ⭐
 ├── convert_page.py                # 页面转换
 ├── convert_category.py            # 分类转换
 ├── convert_template.py            # 模板转换
 ├── restore_from_history.py        # 恢复页面
-├── test_fandom.py                 # 测试连接
-├── get_template_info.py           # 获取模板信息
+├── scan_and_convert.py           # 扫描转换
 ├── move_pages.py                  # 移动页面
-├── convert_cat_ending.py         # 特定用途
-├── convert_cat_page.py           # 特定用途
-├── convert_seasons.py            # 特定用途
-├── update_cat_refs.py            # 更新分类引用
+├── fix_links.py                   # 修复链接
+├── update_cat_refs.py             # 更新分类引用
+├── batch_processor.py             # 批处理工具模块
 └── README.md                      # 本文档
 ```
 
@@ -179,3 +235,4 @@ src/
 
 - [主文档](../README.md)
 - [项目概览](../PROJECT.md)
+- [Agent 指南](../AGENTS.md)

@@ -12,7 +12,8 @@ pip install -r requirements.txt
 ### Running Tests
 ```bash
 # Run a simple connection test
-python src/test_fandom.py "STARS"
+python src/fandom.py test
+python src/fandom.py test "STARS"
 
 # Test single page conversion (recommended first step)
 python src/fandom.py page "页面名" --dry-run
@@ -22,11 +23,14 @@ python src/fandom.py category "分类名" --dry-run --limit 5
 
 # Test template conversion
 python src/fandom.py template "Template:模板名" --test "测试页面名" --dry-run
+
+# Test scan and convert
+python src/fandom.py scan --limit 5 --approve-all
 ```
 
 ### Running Scripts
 ```bash
-# Unified entry point (recommended)
+# Unified entry point (recommended) ⭐
 python src/fandom.py <command> [options]
 
 # Direct script execution
@@ -34,12 +38,18 @@ python src/convert_page.py "页面名"
 python src/convert_category.py "分类名"
 python src/convert_template.py "Template:模板名"
 python src/restore_from_history.py "页面名"
+python src/scan_and_convert.py
+python src/move_pages.py "页面名"
+python src/fix_links.py "舊文本" "新文本"
+python src/update_cat_refs.py "分类名"
 ```
 
 ### Running Single File Tests
 There is no formal test framework (pytest/unittest). Use dry-run mode to test changes before applying:
 ```bash
 python src/fandom.py page "页面名" --dry-run --show-diff
+python src/fandom.py category "分类名" --dry-run --limit 3
+python src/fandom.py template "Template:模板名" --test "测试页面名" --dry-run
 ```
 
 ## Code Style Guidelines

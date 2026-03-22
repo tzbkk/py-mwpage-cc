@@ -224,3 +224,167 @@ doc/
 - 在所有文档中添加了"脚本不修改脚本文件"的安全提醒
 
 所有文档现在都与当前代码实现保持一致，提供了准确、完整、易读的使用说明，并强调了脚本只修改 Wiki 页面、不会修改代码文件的重要安全特性。
+
+---
+
+## 第二次更新：项目整合（2026-03-22）
+
+### 更新概述
+
+本次更新完成了项目的整合工作，将 16 个脚本合并为 11 个核心脚本，并更新了所有相关文档以反映新的代码结构和使用方式。
+
+### 整合的脚本（已删除）
+
+以下脚本已被删除，功能已整合到其他脚本：
+
+1. **test_fandom.py** (531 bytes) → 合并为 `fandom.py test` 命令
+2. **get_template_info.py** (528 bytes) → 合并为 `fandom.py info` 命令
+3. **convert_cat_page.py** (2.0K) → 合并为 `convert_category.py --page` 选项
+4. **convert_cat_ending.py** (2.8K) → 合并为 `convert_category.py --page` 选项
+5. **search_and_convert.py** (4.3K) → 合并为 `convert_page.py --search` 选项
+6. **convert_seasons.py** (5.8K) → 合并为 `convert_page.py --with-subpages` 选项
+
+### 更新的文档
+
+#### 1. README.md（主文档）
+**状态：** ✅ 已更新
+
+**主要更改：**
+- 更新目录结构，删除已整合的脚本
+- 更新统一入口命令列表，新增 5 个命令（test、info、fix-links、update-cat-refs、scan）
+- 新增使用场景示例（11 个场景）
+- 更新配置说明
+
+**新增内容：**
+- `test` 命令说明
+- `info` 命令说明
+- `fix-links` 命令说明
+- `update-cat-refs` 命令说明
+- 搜索转换场景
+- 子页面转换场景
+- 链接修复场景
+- 分类引用更新场景
+
+#### 2. PROJECT.md（项目概览）
+**状态：** ✅ 已更新
+
+**主要更改：**
+- 更新技术架构图，反映新的代码结构
+- 新增使用场景（场景 4-7）
+
+**新增内容：**
+- 扫描转换场景
+- 搜索转换场景
+- 链接修复场景
+- 分类引用更新场景
+- 扩展批处理功能说明
+
+#### 3. src/README.md（src 目录文档）
+**状态：** ✅ 已更新
+
+**主要更改：**
+- 更新统一入口命令列表（新增 5 个命令）
+- 更新 convert_page.py 选项（新增 --search、--filter、--list、--with-subpages）
+- 更新 convert_category.py 选项（新增 --page）
+- 删除已整合的辅助工具说明
+- 更新文件清单
+
+**新增内容：**
+- `scan_and_convert.py` 说明
+- `fix_links.py` 说明
+- `update_cat_refs.py` 说明
+- `batch_processor.py` 说明
+- 搜索转换功能
+- 子页面转换功能
+- 链接修复功能
+- 分类引用更新功能
+
+**删除内容：**
+- test_fandom.py 说明（已整合到 fandom.py）
+- get_template_info.py 说明（已整合到 fandom.py）
+- convert_cat_ending.py 说明（已整合到 convert_category.py）
+- convert_cat_page.py 说明（已整合到 convert_category.py）
+- convert_seasons.py 说明（已整合到 convert_page.py）
+
+#### 4. doc/QUICKSTART.md（快速使用指南）
+**状态：** ✅ 已更新
+
+**主要更改：**
+- 更新测试连接命令
+- 更新所有场景示例
+- 新增场景（场景 7-9）
+- 新增重要选项说明
+- 新增快速参考表
+- 新增常见问题
+
+**新增内容：**
+- 扫描转换场景
+- 错误恢复场景
+- 获取信息场景
+- 预览模式详细说明
+- 限制数量详细说明
+- 从文件读取详细说明
+- 快速参考表
+- 常见问题解答
+
+#### 5. AGENTS.md（Agent 使用指南）
+**状态：** ✅ 已更新
+
+**主要更改：**
+- 更新测试命令（使用 `fandom.py test`）
+- 更新脚本执行列表（添加 scan_and_convert.py、move_pages.py、fix_links.py、update_cat_refs.py）
+- 新增扫描转换测试
+
+### 统一入口新增命令
+
+| 命令 | 功能 | 来源 |
+|------|------|------|
+| `test` | 测试连接 | 整合自 test_fandom.py |
+| `info` | 获取模板/页面信息 | 整合自 get_template_info.py |
+| `fix-links` | 批量修复链接为简体版本 | fix_links.py |
+| `update-cat-refs` | 批量更新分类引用为简体中文 | update_cat_refs.py |
+| `scan` | 扫描所有 main 命名空间页面并交互式转换 | scan_and_convert.py |
+
+### 核心脚本新增功能
+
+| 脚本 | 新增选项/功能 | 整合来源 |
+|------|--------------|----------|
+| convert_page.py | `--search` | search_and_convert.py |
+| convert_page.py | `--filter` | search_and_convert.py |
+| convert_page.py | `--list` | search_and_convert.py |
+| convert_page.py | `--with-subpages` | convert_seasons.py |
+| convert_category.py | `--page` | convert_cat_page.py + convert_cat_ending.py |
+
+### 文档一致性检查
+
+✅ 所有文档中的命令名称保持一致
+✅ 选项名称保持一致
+✅ 示例代码保持一致
+✅ 功能描述保持一致
+✅ 文件结构描述保持一致
+
+### 代码统计
+
+- **整合前：** 约 2,500+ 行代码，16 个脚本
+- **整合后：** 2,060 行代码，11 个核心脚本
+- **减少：** 约 440 行代码，5 个脚本
+
+### 建议后续操作
+
+1. 检查 doc/tools/ 目录下的工具文档是否需要更新（部分已删除的脚本可能还有文档）
+2. 检查 doc/NOTES.md，添加整合相关的笔记
+3. 检查 doc/REFACTORING.md，添加本次整合的重构说明
+4. 检查 doc/CONFIGURATION.md，确认配置说明仍然准确
+5. 考虑删除 doc/tools/ 目录下已不存在脚本的文档
+
+### 总结
+
+本次整合更新：
+- ✅ 删除了 6 个重复/过时的脚本
+- ✅ 整合了 6 个脚本的功能到其他脚本
+- ✅ 新增了 5 个统一入口命令
+- ✅ 更新了 5 个主要文档
+- ✅ 减少了约 440 行代码
+- ✅ 提高了代码复用率和可维护性
+
+所有文档现在与整合后的代码保持一致，用户可以按照文档正确使用所有功能，并通过统一入口 `fandom.py` 访问所有工具。

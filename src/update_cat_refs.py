@@ -5,58 +5,51 @@
 import sys
 import os
 import re
-import argparse
-import time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from fandom_bot import FandomBot
+from batch_processor import BatchProcessor
 
 
 def update_category_ref(cat_name: str, bot: FandomBot, dry_run: bool = False):
-    """更新单个分类的引用"""
+    """更新单个分类的引用，返回需要更新的页面列表"""
     try:
         pages = bot.get_category_members(cat_name)
-        print(f"\n更新引用 Category:{cat_name} 的页面...")
-        print(f"  找到 {len(pages)} 个页面")
-        
-        updated = 0
-        skipped = 0
-        failed = 0
-        
-        for page in pages:
-            try:
-                original = page.text()
-                new_content = original
-                
-                # 替换分类链接
-                pattern = rf'\[\[Category:{re.escape(cat_name)}\]\]'
-                replacement = f'[[Category:{bot.cc.convert(cat_name)}]]'
-                new_content = re.sub(pattern, replacement, new_content)
-                
-                if original != new_content:
-                    if dry_run:
-                        print(f"    📝 {page.name} 将会修改（预览模式）")
-                    else:
-                        page.edit(new_content, summary="更新分类名称为简体中文")
-                        print(f"    ✓ {page.name} 已更新")
-                    updated += 1
-                else:
-                    print(f"    ℹ️  {page.name} 无需修改")
-                    skipped += 1
-                
-                time.sleep(0.3)
-                
-            except Exception as e:
-                print(f"    ⚠️  {page.name} 失败: {e}")
-                failed += 1
-        
-        return updated, failed, skipped
+        print(f"\n📋 更新引用 Category:{cat_name} 的页面...")
+        print(f"   找到 {len(pages)} 个页面")
+        return list(pages)
     except Exception as e:
         print(f"  ⚠️  获取分类成员失败: {e}")
-        return 0, 1, 0
+        return []
+
+
+def fix_page_category(page_name: str, cat_name: str, bot: FandomBot, dry_run: bool = False):
+    """修复单个页面的分类引用"""
+    try:
+        page = bot.get_page(page_name)
+        original = page.text()
+        new_content = original
+        
+        # 替换分类链接
+        pattern = rf'\[\[Category:{re.escape(cat_name)}\]\]'
+        replacement = f'[[Category:{bot.cc.convert(cat_name)}]]'
+        new_content = re.sub(pattern, replacement, new_content)
+        
+        if original != new_content:
+            if dry_run:
+                return True, '📝 将会修改（预览模式）'
+            else:
+                page.edit(new_content, summary="更新分类名称为简体中文")
+                return True, '✓ 已更新'
+        else:
+            return None, 'ℹ️  无需修改'
+    except Exception as e:
+        return False, f'⚠️  失败: {e}'
 
 
 def main():
+    import argparse
+    
     parser = argparse.ArgumentParser(
         description='批量更新分类引用为简体中文',
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -80,7 +73,7 @@ def main():
     
     try:
         bot = FandomBot()
-        print(f"✓ 已登录: {bot.site.username}")
+        print(f"✓ 已登录: {bot.site.username}\n")
     except Exception as e:
         print(f"❌ 登录失败: {e}")
         sys.exit(1)
@@ -96,19 +89,31 @@ def main():
     else:
         categories = args.categories
     
-    print(f"\n=== 批量更新分类引用 ===")
+    print(f"=== 批量更新分类引用 ===")
     print(f"共 {len(categories)} 个分类\n")
     
     total_updated = 0
     total_failed = 0
     total_skipped = 0
     
+    # 逐个处理分类
     for i, cat_name in enumerate(categories, 1):
         print(f"[{i}/{len(categories)}] {cat_name}")
-        updated, failed, skipped = update_category_ref(cat_name, bot, args.dry_run)
-        total_updated += updated
-        total_failed += failed
-        total_skipped += skipped
+        
+        # 获取需要更新的页面
+        pages_to_update = update_category_ref(cat_name, bot, args.dry_run)
+        
+        if not pages_to_update:
+            continue
+        
+        # 使用 BatchProcessor 批量处理
+        processor = lambda name, bot: fix_page_category(name, cat_name, bot, args.dry_run)
+        batch = BatchProcessor(bot, dry_run=args.dry_run, delay=0.3)
+        batch.process_pages([p.name for p in pages_to_update], processor, show_progress=False)
+        
+        total_updated += batch.converted
+        total_failed += batch.failed
+        total_skipped += batch.skipped
     
     print(f"\n{'📊 预览' if args.dry_run else '✅ 完成'}统计:")
     print(f"  - 总分类数: {len(categories)}")

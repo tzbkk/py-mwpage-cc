@@ -17,11 +17,16 @@
 fandom_bot.py (核心库)
     ↓
 src/ (工具层)
-    ├── fandom.py (统一入口)
+    ├── fandom.py (统一入口) ⭐
     ├── convert_page.py
     ├── convert_category.py
     ├── convert_template.py
-    └── restore_from_history.py
+    ├── restore_from_history.py
+    ├── scan_and_convert.py
+    ├── move_pages.py
+    ├── fix_links.py
+    ├── update_cat_refs.py
+    └── batch_processor.py (批处理模块)
     ↓
 用户 (命令行)
 ```
@@ -97,6 +102,54 @@ python src/fandom.py restore "页面名" --show-versions
 python src/fandom.py restore "页面名"
 ```
 
+### 场景 4: 扫描转换
+
+扫描所有 main 命名空间页面并交互式转换：
+
+```bash
+# 仅扫描
+python src/fandom.py scan --scan-only
+
+# 扫描并转换（限制数量）
+python src/fandom.py scan --limit 5 --approve-all
+```
+
+### 场景 5: 搜索转换
+
+搜索包含关键词的页面并转换：
+
+```bash
+# 搜索并转换
+python src/fandom.py page --search "关键词"
+
+# 搜索并过滤
+python src/fandom.py page --search "关键词" --filter "过滤文本"
+```
+
+### 场景 6: 链接修复
+
+批量修复链接为简体版本：
+
+```bash
+# 修复链接
+python src/fandom.py fix-links "舊文本" "新文本"
+
+# 预览修复
+python src/fandom.py fix-links "舊文本" "新文本" --dry-run
+```
+
+### 场景 7: 分类引用更新
+
+批量更新分类引用为简体中文：
+
+```bash
+# 更新分类引用
+python src/fandom.py update-cat-refs "片頭曲" "片尾曲"
+
+# 从文件批量更新
+python src/fandom.py update-cat-refs --from-file categories.txt
+```
+
 ## 扩展性
 
 ### 添加新的变量名映射
@@ -105,11 +158,15 @@ python src/fandom.py restore "页面名"
 
 ### 添加新的保护规则
 
-修改 `protect_filenames()` 函数，添加新的正则表达式模式。
+修改 `fandom_bot.py` 中的 `protect_filenames()` 函数，添加新的正则表达式模式。
 
 ### 支持其他转换模式
 
 修改 `.env` 中的 `CONVERSION_MODE`。
+
+### 扩展批处理功能
+
+使用 `batch_processor.py` 中的 `BatchProcessor` 类创建新的批处理工具。
 
 ## 维护指南
 
@@ -140,6 +197,8 @@ python src/fandom.py restore "页面名"
 - [ ] 进度保存和恢复
 - [ ] 更详细的统计报告
 - [ ] 自动检测需要转换的页面
+- [ ] 支持更多 Wiki 平台
+- [ ] 并发处理提高效率
 
 ## 贡献
 

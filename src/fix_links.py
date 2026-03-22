@@ -5,45 +5,78 @@
 
 import sys
 import os
-import re
-import argparse
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from fandom_bot import FandomBot
 from batch_processor import BatchProcessor
 
 
-def fix_links(old_text: str, new_text: str, bot: FandomBot, dry_run: bool = False):
-    """搜索并修复链接"""
+def search_pages_to_fix(old_text: str, new_text: str, bot: FandomBot, dry_run: bool = False):
+    """搜索并返回需要修复链接的页面"""
     print(f'搜索包含「{old_text}」的页面...')
-    results = list(bot.site.search(old_text, what='text'))
     
-    print(f'\n找到 {len(results)} 个页面\n')
-    
-    # 排除自己
-    pages = [r['title'] for r in results if r['title'] != old_text]
-    return pages
+    try:
+        results = list(bot.site.search(old_text, what='text'))
+        pages = []
+        
+        for result in results:
+            if hasattr(result, 'get'):
+                page_name = result.get('title', '')
+            else:
+                page_name = str(result)
+            
+            # 排除自己
+            if page_name and page_name != old_text:
+                pages.append(page_name)
+        
+        print(f'\n找到 {len(pages)} 个页面\n')
+        return pages
+    except Exception as e:
+        print(f'搜索出错: {e}')
+        return []
 
 
 def fix_page(page_name: str, bot: FandomBot, old_text: str, new_text: str, dry_run: bool = False):
     """修复单个页面的链接"""
-    page = bot.get_page(page_name)
-    original = page.text()
-    
-    # 替换链接
-    new_content = re.sub(re.escape(old_text), new_text, original)
-    
-    if original != new_content:
-        if dry_run:
-            return True, '📝 将会修改（预览模式）'
+    try:
+        page = bot.get_page(page_name)
+        original = page.text()
+        new_content = original
+        
+        # 智能替换各种格式的链接
+        # 1. [[页面名]]
+        new_content = new_content.replace(f'[[{old_text}]]', f'[[{new_text}]]')
+        # 2. [[页面名|显示文字]]
+        new_content = new_content.replace(f'[[{old_text}|', f'[[{new_text}|')
+        # 3. [[ 链接]]（带空格）
+        new_content = new_content.replace(f'[[ {old_text}]]', f'[[ {new_text}]]')
+        new_content = new_content.replace(f'[[ {old_text}|', f'[[ {new_text}|')
+        # 4. |链接]] 格式（链接作为参数）
+        new_content = new_content.replace(f'|{old_text}]]', f'|{new_text}]]')
+        # 5. Category:页面名
+        new_content = new_content.replace(f'Category:{old_text}', f'Category:{new_text}')
+        # 6. Template:页面名
+        new_content = new_content.replace(f'Template:{old_text}', f'Template:{new_text}')
+        new_content = new_content.replace(f'模板:{old_text}', f'模板:{new_text}')
+        # 7. File:页面名
+        new_content = new_content.replace(f'File:{old_text}', f'File:{new_text}')
+        new_content = new_content.replace(f'文件:{old_text}', f'文件:{new_text}')
+        
+        if original != new_content:
+            if dry_run:
+                return True, '📝 将会修改（预览模式）'
+            else:
+                page.edit(new_content, summary=f'修复链接：{old_text} → {new_text}')
+                return True, '✓ 已修复'
         else:
-            page.edit(new_content, summary=f'修复链接：{old_text} → {new_text}')
-            return True, '✓ 已修复'
-    else:
-        return None, 'ℹ️  无需修改'
+            return None, 'ℹ️  无需修改'
+    except Exception as e:
+        return False, f'⚠️  失败: {e}'
 
 
 def main():
+    import argparse
+    
     parser = argparse.ArgumentParser(
         description='批量修复链接为简体版本',
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -70,7 +103,7 @@ def main():
         sys.exit(1)
     
     # 搜索需要修复的页面
-    pages = fix_links(args.old_text, args.new_text, bot, args.dry_run)
+    pages = search_pages_to_fix(args.old_text, args.new_text, bot, args.dry_run)
     
     if args.limit:
         pages = pages[:args.limit]

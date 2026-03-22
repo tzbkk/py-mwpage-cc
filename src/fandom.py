@@ -12,6 +12,24 @@ import os
 import argparse
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from fandom_bot import FandomBot
+
+def test_connection(bot, page_name='STARS'):
+    """测试连接"""
+    print(f"✓ 已登录: {bot.site.username}")
+    
+    page = bot.get_page(page_name)
+    print(f"\n页面标题: {page.name}")
+    print(f"是否存在: {page.exists}")
+    print(f"\n页面内容:\n{page.text()}")
+
+def get_template_info(bot, template_name='Template:音樂信息'):
+    """获取模板信息"""
+    template_page = bot.get_page(template_name)
+    print(f"模板页面: {template_page.name}")
+    print(f"是否存在: {template_page.exists}")
+    print(f"\n模板内容:\n{template_page.text()}")
+
 def main():
     parser = argparse.ArgumentParser(
         description='Fandom Wiki 转换工具集',
@@ -22,17 +40,26 @@ def main():
   category  转换分类下的所有页面
   template  转换使用模板的所有页面
   restore   从历史版本恢复页面
+  scan      扫描所有 main 命名空间页面并交互式转换
+  test      测试连接
+  info      获取模板/页面信息
 
 快速开始:
-  # 1. 测试单个页面
+  # 1. 测试连接
+  %(prog)s test
+  
+  # 2. 测试单个页面
   %(prog)s page "西片" --dry-run
   %(prog)s page "西片"
   
-  # 2. 检查 Wiki 上的结果
+  # 3. 检查 Wiki 上的结果
   
-  # 3. 批量转换
+  # 4. 批量转换
   %(prog)s category "音乐"
   %(prog)s template "Template:角色信息" --batch
+  
+  # 5. 扫描并交互式转换所有 main 页面
+  %(prog)s scan
 
 更多信息:
   %(prog)s <command> --help
@@ -47,10 +74,15 @@ def main():
     page_parser.add_argument('--from-file', metavar='FILE', help='从文件读取页面列表')
     page_parser.add_argument('--dry-run', action='store_true', help='预览模式')
     page_parser.add_argument('--show-diff', action='store_true', help='显示修改详情')
+    page_parser.add_argument('--search', metavar='KEYWORD', help='搜索包含关键词的页面')
+    page_parser.add_argument('--filter', help='额外过滤模式')
+    page_parser.add_argument('--list', action='store_true', help='只列出页面')
+    page_parser.add_argument('--with-subpages', action='store_true', help='同时转换子页面')
     
     # category 子命令
     cat_parser = subparsers.add_parser('category', help='转换分类下的所有页面')
-    cat_parser.add_argument('category', help='分类名称')
+    cat_parser.add_argument('category', nargs='?', help='分类名称')
+    cat_parser.add_argument('--page', metavar='NAME', help='转换单个分类页面本身（含移动）')
     cat_parser.add_argument('--list', action='store_true', help='只列出页面')
     cat_parser.add_argument('--dry-run', action='store_true', help='预览模式')
     cat_parser.add_argument('--limit', type=int, metavar='N', help='限制转换数量')
@@ -71,11 +103,54 @@ def main():
     restore_parser.add_argument('page', help='要恢复的页面名称')
     restore_parser.add_argument('--show-versions', action='store_true', help='显示历史版本')
     
+    # scan 子命令
+    scan_parser = subparsers.add_parser('scan', help='扫描所有 main 命名空间页面并交互式转换')
+    scan_parser.add_argument('--limit', type=int, metavar='N', help='限制处理的页面数量')
+    scan_parser.add_argument('--scan-only', action='store_true', help='仅扫描，不进行转换')
+    scan_parser.add_argument('--approve-all', action='store_true', help='自动批准所有修改（非交互式）')
+    
+    # test 子命令
+    test_parser = subparsers.add_parser('test', help='测试连接')
+    test_parser.add_argument('page', nargs='?', help='测试页面名称（默认：STARS）')
+    
+    # info 子命令
+    info_parser = subparsers.add_parser('info', help='获取模板/页面信息')
+    info_parser.add_argument('template', nargs='?', help='模板名称（默认：Template:音樂信息）')
+    
+    # fix-links 子命令
+    fix_parser = subparsers.add_parser('fix-links', help='批量修复链接为简体版本')
+    fix_parser.add_argument('old_text', help='要替换的旧文本')
+    fix_parser.add_argument('new_text', help='替换后的新文本')
+    fix_parser.add_argument('--limit', type=int, metavar='N', help='限制处理的页面数量')
+    fix_parser.add_argument('--dry-run', action='store_true', help='预览模式')
+    
+    # update-cat-refs 子命令
+    update_parser = subparsers.add_parser('update-cat-refs', help='批量更新分类引用为简体中文')
+    update_parser.add_argument('categories', nargs='*', help='要更新的分类名称（不含 Category: 前缀）')
+    update_parser.add_argument('--from-file', metavar='FILE', help='从文件读取分类列表')
+    update_parser.add_argument('--dry-run', action='store_true', help='预览模式')
+    
     args = parser.parse_args()
     
     if not args.command:
         parser.print_help()
         sys.exit(1)
+    
+    # 初始化 bot（对于所有命令）
+    try:
+        bot = FandomBot()
+    except Exception as e:
+        print(f"❌ 登录失败: {e}")
+        sys.exit(1)
+    
+    # test 和 info 命令直接执行
+    if args.command == 'test':
+        test_connection(bot, args.page or 'STARS')
+        sys.exit(0)
+    
+    if args.command == 'info':
+        get_template_info(bot, args.template or 'Template:音樂信息')
+        sys.exit(0)
     
     # 调用相应的脚本
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -83,7 +158,13 @@ def main():
     if args.command == 'page':
         import convert_page
         sys.argv = ['convert_page.py']
-        if args.from_file:
+        if args.search:
+            sys.argv.extend(['--search', args.search])
+            if args.filter:
+                sys.argv.extend(['--filter', args.filter])
+            if args.list:
+                sys.argv.append('--list')
+        elif args.from_file:
             sys.argv.extend(['--from-file', args.from_file])
         else:
             sys.argv.extend(args.pages)
@@ -91,11 +172,17 @@ def main():
             sys.argv.append('--dry-run')
         if args.show_diff:
             sys.argv.append('--show-diff')
+        if args.with_subpages:
+            sys.argv.append('--with-subpages')
         convert_page.main()
         
     elif args.command == 'category':
         import convert_category
-        sys.argv = ['convert_category.py', args.category]
+        sys.argv = ['convert_category.py']
+        if args.page:
+            sys.argv.extend(['--page', args.page])
+        elif args.category:
+            sys.argv.append(args.category)
         if args.list:
             sys.argv.append('--list')
         if args.dry_run:
@@ -129,6 +216,37 @@ def main():
         if args.show_versions:
             sys.argv.append('--show-versions')
         restore_from_history.main()
+        
+    elif args.command == 'scan':
+        import scan_and_convert
+        sys.argv = ['scan_and_convert.py']
+        if args.limit:
+            sys.argv.extend(['--limit', str(args.limit)])
+        if args.scan_only:
+            sys.argv.append('--scan-only')
+        if args.approve_all:
+            sys.argv.append('--approve-all')
+        scan_and_convert.main()
+    
+    elif args.command == 'fix-links':
+        import fix_links
+        sys.argv = ['fix_links.py', args.old_text, args.new_text]
+        if args.limit:
+            sys.argv.extend(['--limit', str(args.limit)])
+        if args.dry_run:
+            sys.argv.append('--dry-run')
+        fix_links.main()
+    
+    elif args.command == 'update-cat-refs':
+        import update_cat_refs
+        sys.argv = ['update_cat_refs.py']
+        if args.categories:
+            sys.argv.extend(args.categories)
+        if args.from_file:
+            sys.argv.extend(['--from-file', args.from_file])
+        if args.dry_run:
+            sys.argv.append('--dry-run')
+        update_cat_refs.main()
 
 if __name__ == "__main__":
     main()

@@ -15,6 +15,7 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from fandom_bot import FandomBot, protect_filenames, restore_filenames, verify_filenames_preserved
+from batch_processor import BatchProcessor
 
 def convert_page(text, bot):
     """转换单个页面的文本"""
@@ -90,41 +91,29 @@ def convert_single_page(page_name, bot, dry_run=False, show_diff=False):
         print(f"❌ 保存失败: {e}")
         return False
 
-def convert_multiple_pages(page_names, bot, dry_run=False):
-    """批量转换多个页面"""
-    print(f"=== 批量转换 ===")
-    print(f"共 {len(page_names)} 个页面\n")
+def convert_page_with_subpages(page_name, bot, dry_run=False):
+    """转换单个页面及其子页面"""
+    print(f"\n📄 转换页面: {page_name}")
+    
+    page = bot.get_page(page_name)
+    if not page.exists:
+        print(f"❌ 页面不存在: {page_name}")
+        return False, 0, 0, 0
+    
+    # 转换主页面
+    original = page.text()
+    new_content = convert_page(original, bot)
     
     converted = 0
     failed = 0
     skipped = 0
     
-    for i, page_name in enumerate(page_names, 1):
-        print(f"\n[{i}/{len(page_names)}] {page_name}")
-        
-        try:
-            page = bot.get_page(page_name)
-            if not page.exists:
-                print("  ⚠️  页面不存在，跳过")
-                skipped += 1
-                continue
-            
-            original = page.text()
-            new_content = convert_page(original, bot)
-            
-            if original == new_content:
-                print("  - 无需修改")
-                skipped += 1
-                continue
-            
-            # 验证转换
-            valid = verify_conversion(original, new_content, page_name)
-            
-            if not valid:
-                print("  ⚠️  验证失败，跳过")
-                failed += 1
-                continue
-            
+    if original != new_content:
+        valid, errors = verify_filenames_preserved(original, new_content)
+        if not valid:
+            print("  ⚠️  验证失败，跳过")
+            failed += 1
+        else:
             if dry_run:
                 print("  📝 将会修改（预览模式）")
                 converted += 1
@@ -132,39 +121,66 @@ def convert_multiple_pages(page_names, bot, dry_run=False):
                 bot.edit_page(page, new_content, summary="转换为简体中文")
                 print("  ✓ 已转换")
                 converted += 1
-                
-                if i < len(page_names):
-                    time.sleep(1)
-                    
-        except Exception as e:
-            print(f"  ⚠️  失败: {e}")
-            failed += 1
+    else:
+        print("  ℹ️  无需修改")
+        skipped += 1
+    
+    # 处理子页面
+    try:
+        subpages = bot.get_subpages(page_name)
+        print(f"  找到 {len(subpages)} 个子页面")
+        
+        for j, subpage in enumerate(subpages, 1):
+            print(f"  [{j}/{len(subpages)}] {subpage.name}")
+            orig = subpage.text()
+            new = convert_page(orig, bot)
             
-            if 'ratelimited' in str(e).lower():
-                print("  ⏳ 遇到速率限制，等待 60 秒...")
-                time.sleep(60)
+            if orig != new:
+                valid, errors = verify_filenames_preserved(orig, new)
+                if not valid:
+                    print("    ⚠️  验证失败，跳过")
+                    failed += 1
+                else:
+                    if dry_run:
+                        print("    📝 将会修改（预览模式）")
+                        converted += 1
+                    else:
+                        bot.edit_page(subpage, new, summary="转换为简体中文")
+                        print("    ✓ 已转换")
+                        converted += 1
+            else:
+                print("    ℹ️  无需修改")
+                skipped += 1
+            
+            if j < len(subpages):
+                time.sleep(0.3)
+    except Exception as e:
+        print(f"  ⚠️  获取子页面失败: {e}")
     
-    print(f"\n{'📊 预览' if dry_run else '✅ 完成'}统计:")
-    print(f"  - 总页面数: {len(page_names)}")
-    print(f"  - {'将修改' if dry_run else '已修改'}: {converted}")
-    print(f"  - 跳过: {skipped}")
-    print(f"  - 失败: {failed}")
-    
-    return failed == 0
+    return (failed == 0), converted, failed, skipped
 
-def convert_from_file(file_path, bot, dry_run=False):
-    """从文件读取页面列表并转换"""
-    print(f"=== 从文件转换 ===")
-    print(f"文件: {file_path}\n")
+def search_pages(bot: FandomBot, keyword: str, filter_pattern: str = None):
+    """搜索包含关键词的页面"""
+    print(f"正在搜索: {keyword}")
+    
+    pages = []
     
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            page_names = [line.strip() for line in f if line.strip() and not line.startswith('#')]
+        for result in bot.site.search(keyword, namespace='0'):
+            page_name = result.get('title', '') if hasattr(result, 'get') else str(result)
+            
+            if filter_pattern:
+                if filter_pattern in page_name:
+                    pages.append(page_name)
+                    print(f"  找到: {page_name}")
+            else:
+                pages.append(page_name)
+                print(f"  找到: {page_name}")
     except Exception as e:
-        print(f"❌ 读取文件失败: {e}")
-        return False
+        print(f"搜索出错: {e}")
     
-    return convert_multiple_pages(page_names, bot, dry_run)
+    print(f"\n共找到 {len(pages)} 个页面")
+    return pages
 
 def main():
     parser = argparse.ArgumentParser(
@@ -187,6 +203,13 @@ def main():
   # 从文件读取页面列表
   %(prog)s --from-file pages.txt
   
+  # 搜索并转换页面
+  %(prog)s --search "关键词"
+  %(prog)s --search "关键词" --filter "过滤文本"
+  
+  # 转换页面及其子页面
+  %(prog)s "动画第一季" --with-subpages
+  
   # 预览批量转换
   %(prog)s "西片" "真野" --dry-run
 
@@ -200,12 +223,16 @@ def main():
     
     parser.add_argument('pages', nargs='*', help='要转换的页面名称')
     parser.add_argument('--from-file', metavar='FILE', help='从文件读取页面列表')
+    parser.add_argument('--search', metavar='KEYWORD', help='搜索包含关键词的页面')
+    parser.add_argument('--filter', help='额外过滤模式（只保留包含此字符串的页面）')
+    parser.add_argument('--list', action='store_true', help='只列出页面，不转换')
     parser.add_argument('--dry-run', action='store_true', help='预览模式：显示将要修改但不保存')
     parser.add_argument('--show-diff', action='store_true', help='显示修改详情')
+    parser.add_argument('--with-subpages', action='store_true', help='同时转换子页面')
     
     args = parser.parse_args()
     
-    if not args.pages and not args.from_file:
+    if not args.pages and not args.from_file and not args.search:
         parser.print_help()
         sys.exit(1)
     
@@ -216,12 +243,63 @@ def main():
         print(f"❌ 登录失败: {e}")
         sys.exit(1)
     
-    if args.from_file:
-        success = convert_from_file(args.from_file, bot, args.dry_run)
-    elif len(args.pages) == 1:
-        success = convert_single_page(args.pages[0], bot, args.dry_run, args.show_diff)
+    # 搜索模式
+    page_names = None
+    if args.search:
+        pages = search_pages(bot, args.search, args.filter)
+        if args.list:
+            sys.exit(0)
+        if not pages:
+            print("没有找到需要处理的页面")
+            sys.exit(0)
+        page_names = pages
+    
+    # 获取页面列表
+    if not page_names:
+        if args.from_file:
+            try:
+                with open(args.from_file, 'r', encoding='utf-8') as f:
+                    page_names = [line.strip() for line in f if line.strip() and not line.startswith('#')]
+            except Exception as e:
+                print(f"❌ 读取文件失败: {e}")
+                sys.exit(1)
+        else:
+            page_names = args.pages
+    
+    # 带子页面转换
+    if args.with_subpages:
+        print(f"=== 批量转换页面及子页面 ===")
+        print(f"共 {len(page_names)} 个主页面\n")
+        
+        total_converted = 0
+        total_failed = 0
+        total_skipped = 0
+        
+        for i, page_name in enumerate(page_names, 1):
+            print(f"[{i}/{len(page_names)}] {page_name}")
+            success, converted, failed, skipped = convert_page_with_subpages(page_name, bot, args.dry_run)
+            total_converted += converted
+            total_failed += failed
+            total_skipped += skipped
+            
+            if i < len(page_names):
+                time.sleep(0.5)
+        
+        print(f"\n{'📊 预览' if args.dry_run else '✅ 完成'}统计:")
+        print(f"  - 总页面数: {len(page_names)}")
+        print(f"  - {'将修改' if args.dry_run else '已修改'}: {total_converted}")
+        print(f"  - 跳过: {total_skipped}")
+        print(f"  - 失败: {total_failed}")
+        
+        sys.exit(0 if total_failed == 0 else 1)
+    
+    # 普通页面转换
+    if len(page_names) == 1:
+        success = convert_single_page(page_names[0], bot, args.dry_run, args.show_diff)
     else:
-        success = convert_multiple_pages(args.pages, bot, args.dry_run)
+        batch = BatchProcessor(bot, dry_run=args.dry_run, delay=0.5)
+        processor = lambda name, bot: (True, '✓ 已转换') if bot.convert_text(bot.get_page(name).text()) != bot.get_page(name).text() else (None, 'ℹ️  无需修改')
+        success = batch.process_pages(page_names, processor, "批量转换页面")
     
     sys.exit(0 if success else 1)
 
